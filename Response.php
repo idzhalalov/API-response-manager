@@ -12,28 +12,17 @@ class ResponseManager
      *
      * @return Response200 (Response206 | Response304 | Response401 | Response404 | Response405 | Response500)
      *
+     * @throws Exception When response for given type of status does not exists
+     *
      * @example ResponseManager::getInstance(500)->send()->finish();
      */
     public static function getInstance($statusCode, $result = [])
     {
-        // @todo rid of switch() and create instances dynamically
-        switch ($statusCode) {
-            case 200:
-                return new Response200($result);
-            case 206:
-                return new Response206($result);
-            case 304:
-                return new Response304($result);
-            case 401:
-                return new Response401($result);
-            case 404:
-                return new Response404($result);
-            case 405:
-                return new Response405($result);
-            case 500:
-                return new Response500($result);
-            default:
-                return new Response200($result);
+        $className = 'Response' . $statusCode;
+        if (class_exists($className)) {
+            return new $className($result);
+        } else {
+            throw new Exception("A response for '$statusCode' status does not exists");
         }
     }
 }
