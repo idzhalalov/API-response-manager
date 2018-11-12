@@ -5,6 +5,16 @@ require_once __DIR__ . '/Response.php';
 
 use PHPUnit\Framework\TestCase;
 
+class ResponseForTests extends Response
+{
+    protected $statusCode = 206;
+
+    public function finish()
+    {
+        throw new RuntimeException('Exit');
+    }
+}
+
 class ResponseTest extends TestCase
 {
     protected $successfulApiResultArray;
@@ -21,7 +31,7 @@ class ResponseTest extends TestCase
     }
     
     /**
-     * Могу создать ответ 200 с контентом
+     * Can create a response of status 200
      */
     public function testCanCreateResponse200()
     {
@@ -30,18 +40,19 @@ class ResponseTest extends TestCase
     }
     
     /**
-     * Могу отправить ответ 200 и вернется
-     * прерывание, выполнив которое, можно завершить сценарий
+     * Can invoke finish() method and finish the program
      */
     public function testCanCreateExitAfterSending()
     {
-        $response = new Response200($this->successfulApiResultArray);
-        $exit = $response->send();
-        $this->assertTrue($exit instanceof Response200);
+        $response = new ResponseForTests($this->successfulApiResultArray);
+        $response = $response->send();
+
+        $this->expectException(RuntimeException::class);
+        $response->finish();
     }
 
     /**
-     * Могу отправить ответ 200 с контентом
+     * Can send a response with 200 code and content
      */
     public function testCanSendResponse200()
     {
@@ -57,8 +68,7 @@ class ResponseTest extends TestCase
     }
 
     /**
-     * Могу создать ответ и дефолтные заголовки
-     * будут установлены автоматически
+     * Can create a response which is has default headers
      */
     public function testCanSeeDefaultHeaders()
     {
@@ -70,8 +80,8 @@ class ResponseTest extends TestCase
     }
    
     /**
-     * Могу отправить ответ 304 с контентом, при этом контент
-     * не вернется клиенту, заголовок длины не вернется
+     * Can create response with a status code 304 and content
+     * however Content-length will be equal 0
      */
     public function testCanSendResponse304()
     {
@@ -88,7 +98,7 @@ class ResponseTest extends TestCase
     }
    
     /**
-     * Могу отправить ответ 500
+     * Can create and send a response with 500 code
      */
     public function testCanSendResponse500()
     {
@@ -102,41 +112,41 @@ class ResponseTest extends TestCase
     }
     
     /**
-     * Могу установить заголовок строкой
+     * Can set a header using a string
      */
     public function testCanSetHeaderAsString()
     {
 	    Response::setHeader('Hello: World');
 
         $response = new Response200($this->successfulApiResultArray);
-        $response->setHeader('ApplicationType: MyTaxiApi.v1');
+        $response->setHeader('ApplicationType: SomeAPI.v1');
         $response->send();
         
         $responseResult = $response->getResponse();
         $this->assertTrue($response instanceof Response200);
-        $this->assertEquals('MyTaxiApi.v1', $responseResult->headers['ApplicationType']);
+        $this->assertEquals('SomeAPI.v1', $responseResult->headers['ApplicationType']);
         $this->assertEquals('World', $responseResult->headers['Hello']);
         $this->assertEquals('35', $responseResult->headers['Content-Length']);
     }
     
     /**
-     * Могу установить заголовок массивом
+     * Can set a header using an array
      */
     public function testCanSetHeaderAsArray()
     {
         $response = new Response200($this->successfulApiResultArray);
-        $headers = ['ApplicationType: MyTaxiApi.v1', 'Hello: World'];
+        $headers = ['ApplicationType: SomeAPI.v1', 'Hello: World'];
         $response->setHeader($headers);
         $response->send();
         
         $responseResult = $response->getResponse();
         $this->assertTrue($response instanceof Response200);
-        $this->assertEquals('MyTaxiApi.v1', $responseResult->headers['ApplicationType']);
+        $this->assertEquals('SomeAPI.v1', $responseResult->headers['ApplicationType']);
         $this->assertEquals('World', $responseResult->headers['Hello']);
     }
 
     /**
-     * Не могу установить дублирующийся заголовок. Могу переопределить любой заголовок
+     * Can't set a duplicated header but can redefine any header
     */
     public function testCantSetDuplicatedHeaders()
     {
@@ -148,6 +158,5 @@ class ResponseTest extends TestCase
         $responseResult = $response->getResponse();
         $this->assertTrue($response instanceof Response200);
         $this->assertEquals('application/xml', $responseResult->headers['Content-Type']);
-        $this->assertNotEquals('application/json', $responseResult->headers['Content-Type']);
     }
 }
