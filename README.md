@@ -30,8 +30,8 @@ if ($somethig) {
 } else {
     $response = ResponseManager::getInstance(200);
 }
-$resp->setHeader($headers);
-$resp->send();
+$response->setHeader($headers);
+$response->send();
 
 // Then we have to do something
 while ($someConditions) {
